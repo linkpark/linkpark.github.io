@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.0.0">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2020-09-21T15:56:12+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Jin’s Research Blog</title><subtitle>Keep it simple and easy</subtitle><author><name>Jin Wang</name><email>wjlinkpark@gmail.com</email></author><entry><title type="html">From policy gradient theorem to variational autoencoder</title><link href="http://localhost:4000/2020/03/21/pg-vae.html" rel="alternate" type="text/html" title="From policy gradient theorem to variational autoencoder" /><published>2020-03-21T16:09:00+00:00</published><updated>2020-03-21T16:09:00+00:00</updated><id>http://localhost:4000/2020/03/21/pg-vae</id><content type="html" xml:base="http://localhost:4000/2020/03/21/pg-vae.html">&lt;blockquote&gt;
+  &lt;p&gt;Policy gradient theorem is the basis of many deep reinforcement learning methods (e.g., &lt;a href=&quot;https://arxiv.org/abs/1707.06347&quot;&gt;PPO&lt;/a&gt;, &lt;a href=&quot;https://arxiv.org/abs/1502.05477&quot;&gt;TRPO&lt;/a&gt;, and &lt;a href=&quot;https://arxiv.org/abs/1801.01290&quot;&gt;SAC&lt;/a&gt;). Meanwhile, Variational Auto-encoder (VAE) is one of the popular generative methods in machine learning. Since the target problems of these approaches share the same formulation, we can use policy gradient as an alternative training method for VAE.
+&lt;!--more--&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;what-is-policy-gradient-theorem&quot;&gt;What is policy gradient theorem&lt;/h2&gt;
+
+&lt;p&gt;Policy gradient theorem is widely applied to solve RL problems. The theoretical model that reinforcement learning (RL) tries to handle is Markov Decision Process (MDP). In general, MDP consists of a six-element tuple $\mathcal{T} = &amp;lt;\mathcal{S}, \mathcal{A}, \mathcal{R}, \mathcal{P},  \mathcal{P}_0, \gamma&amp;gt;$. Here, $\mathcal{S}$ is the state space, $\mathcal{A}$ denotes the action space, $\mathcal{R}$ is a reward function, $\mathcal{P}$ is the state-transition probabilities matrix, $\mathcal{P}_0$ is the initial state distribution, and
+$\gamma \in [0, 1]$ is the discount factor. A policy $\pi(a | s)$, where $a \in \mathcal{A}$ and $s \in \mathcal{S}$, is a mapping from state $s$ to the probability of selecting action $a$. A trajectory $\tau$ is defined by a sequence of sampling history under policy&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\tau_{\pi}=(s_0, a_0, r_0, s_1, a_1, r_1, ...).&lt;/script&gt;
+
+&lt;p&gt;The state value function of a state $s_t$ under a policy $\pi$ is denoted as $v_\pi(s_t)$, which is the expected return when starting in $s_t$ and following $\pi$ thereafter. Thus the value function can be calculated as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;v_{\pi}(s_t) = \mathbb{E}_{\tau \sim P_{\mathcal{T}}(\tau|\pi)} \left [ \sum_{k=t} \gamma^{k-t} r_k \right ].&lt;/script&gt;
+
+&lt;p&gt;In literature, researchers tend to use state-action value function, denoted as $q_\pi (s_t, a_t)$, which can be derived by state value function:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;q_\pi(s_t, a_t) = \mathbb{E}_{a_t \sim \pi (a_t |s_t) }v_{\pi}(s_t ).&lt;/script&gt;
+
+&lt;p&gt;The goal of reinforcment learning is to obtain the optimal policy $\pi^* $ to maximize the expected total reward:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;J = \mathbb{E}_{s_0 \sim \mathcal{P}_0} \left [ v_{\pi}(s_0) \right ] =  \mathbb{E}_{\tau \sim \pi, \mathcal{S}}\left [ \sum_{t=0}^{T} \gamma^t q_{\pi}(s_t, a_t) \right ] .&lt;/script&gt;
+
+&lt;p&gt;This can be seen as a typical numerical optimisation problem, where the policy is a parametrised by $\theta$. The key to find the optimal policy is to calculate the gradient of the target function:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\nabla_{\theta}J = \nabla_{\theta} \mathbb{E}_{s_0 \sim \mathcal{P}_0} \mathbb{E}_{a_0 \sim \pi(a_0|s_0)} q_\pi(s_0, a_0) = \mathbb{E}_{s_0 \sim \mathcal{P}_0} \nabla_{\theta} \mathbb{E}_{a_0 \sim \pi(a_0|s_0)} q_\pi(s_0, a_0)&lt;/script&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{equation}
+\begin{split}
+ \nabla_{\theta} \mathbb{E}_{a \sim \pi(a|s)} q_\pi(s_0, a_0) &amp;=
+   \sum_{s} \left (\sum_{k=0}^{\infty} Pr(s_0 \rightarrow s, k, \pi) \right)  \sum_{a}\nabla_{\theta}\pi(a|s)q_{\pi}(s, a), \\
+   &amp;\propto \sum_{s}\mu(s) \sum_a \nabla_{\theta} \pi(a|s)q_\pi(s, a) \\
+   &amp;= \sum_{s}\mu(s) \sum_a \frac{\nabla_{\theta}\pi(a|s)}{\pi(a|s)}\pi(a|s)q_\pi(s, a) \\
+   &amp;= \sum_{s}\mu(s) \sum_a  \pi(a|s) q_\pi(s,a) \nabla_{\theta}\log\pi(a|s). \\
+
+\end{split}
+\end{equation} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Here we apply the Monte-Carlo method  (refer to &lt;a href=&quot;http://incompleteideas.net/book/RLbook2018.pdf&quot;&gt;reinforcement learning: an introduction&lt;/a&gt; chapter 5  ) to obtain the graident through the sampling trajectories $\tau = (s_0,a_0,r_0, …, s_T, a_T, r_T)$, thus we have:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{equation}
+\begin{split}
+\sum_{s}\mu(s) \sum_a  \pi(a|s) q_\pi(s,a) \nabla_{\theta}\log\pi(a|s) &amp;\approx \mathbb{E}_{\tau \sim \pi, \mathcal{P}} \left [ \sum_{t=0}^{T} \gamma^t \nabla_{\theta}\log\pi(a_t|s_t) q_\pi(s_t,a_t) \right ] \\
+\end{split}
+\end{equation} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The above equation is the basis of the policy gradient methods such as &lt;a href=&quot;https://arxiv.org/abs/1707.06347&quot;&gt;PPO&lt;/a&gt;, &lt;a href=&quot;https://arxiv.org/abs/1502.05477&quot;&gt;TRPO&lt;/a&gt;, and &lt;a href=&quot;https://arxiv.org/abs/1801.01290&quot;&gt;SAC&lt;/a&gt;. A simple approximation to approximate the policy gradient is to use the total reward for each trajectory instead of using q-values as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\nabla_{\theta}J = \mathbb{E}_{\tau \sim \pi, \mathcal{P}} \left [ \left ( G_{\tau} - b(s) \right ) \nabla_{\theta}\log \pi(a_t | s_t)\right ],&lt;/script&gt;
+
+&lt;p&gt;where $b(s)$ is a baseline that does not vary with action $a$.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-is-the-vae&quot;&gt;What is the VAE&lt;/h2&gt;
+&lt;p&gt;VAE is a generative model based on latent variable. The fundamental mathematic problem that a generative model needs to solve is to obtain the distribution, $p(x)$, over the original data in some potentially high-dimensional space, assuming $p(x)$ is parametrised by $\theta$, where $p(x) \approx p_{\theta}(x)$. However, obtaining this distribution can be challenging.  Lots of methods get the optimal parameter $\theta$ by &lt;code class=&quot;highlighter-rouge&quot;&gt;maximum likelihood fit&lt;/code&gt;:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta \leftarrow {\rm argmax}_{\theta} \frac{1}{N} \sum_i^N \log p_{\theta} (x_i)&lt;/script&gt;
+
+&lt;p&gt;Current methods that directly calculate $p(x)$ have had one of tree drawbacks: 1) they might require strong assumptions about the structure in the data; 2) they might make severe approximations, leading to suboptimal models; 3) they might rely on computationally expensive inference procedures like Markov Chain Monte Carlo.&lt;/p&gt;
+
+&lt;p&gt;VAE solves this problem by using &lt;em&gt;latent model&lt;/em&gt;. Instead of directly calculate $p(x)$, the objective of VAE is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;p(x) = \int_{z} p(x|z)p(z),&lt;/script&gt;
+
+&lt;p&gt;where &lt;code class=&quot;highlighter-rouge&quot;&gt;$p(z)$&lt;/code&gt; is a simple distribution (e.g., gaussian distribution) and &lt;code class=&quot;highlighter-rouge&quot;&gt;$p(x|z)$&lt;/code&gt; can be approximated by parametrised functions (e.g., neural networks). Then, we can calculate the parameters by using maximum likelihood as：&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta \leftarrow {\rm argmax}_{\theta} \frac{1}{N} \sum_i^N \log \left( \int_{z} p_{\theta}(x|z)p(z) d_z \right ),&lt;/script&gt;
+
+&lt;p&gt;However, calculate the term &lt;code class=&quot;highlighter-rouge&quot;&gt;$ \int_{z} p_{\theta}(x|z)p(z) d_z$&lt;/code&gt; is intractable, which might need extremely large number of samples of $z$ in high dimensional spaces.&lt;/p&gt;
+
+&lt;p&gt;VAE solves this problem by assuming that the sampled values of z are likely to have produced x, and computes &lt;code class=&quot;highlighter-rouge&quot;&gt;p(x)&lt;/code&gt; just from those sampled values. This means that we need a new function &lt;code class=&quot;highlighter-rouge&quot;&gt;$p(z|x)$&lt;/code&gt; which can take a value of $x$ and give the distribution over z values that are likely to produce x. Hopefully, the space of $z$ values that are likely under &lt;code class=&quot;highlighter-rouge&quot;&gt;$p(z|x)$&lt;/code&gt; will be much smaller than the space of all z’s that are likely under the prior $p(z)$. However, it is still hard to calculate &lt;code class=&quot;highlighter-rouge&quot;&gt;$p(z|x)$&lt;/code&gt;. VAE uses &lt;a href=&quot;https://arxiv.org/abs/1601.0067&quot;&gt;variational inference&lt;/a&gt; to approximate &lt;code class=&quot;highlighter-rouge&quot;&gt;p(z|x)$&lt;/code&gt; as &lt;code class=&quot;highlighter-rouge&quot;&gt;$q(z|x; \theta) \approx p(z|x)$&lt;/code&gt;, where &lt;code class=&quot;highlighter-rouge&quot;&gt;$q(z|x; \theta)$&lt;/code&gt; is a parameterized distribution. In order to minimise the distance between &lt;code class=&quot;highlighter-rouge&quot;&gt;$q(z|x)$&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;p(z|x)&lt;/code&gt;, we introduce the Kullback-Leibler divergence (KL-divergence) which is defined as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;{\rm KL}(q(z|x)\|p(z|x)) = \mathbb{E}_{z \sim q(z|x)} \left [ \log \frac{q(z|x)}{p(z|x)} \right ].&lt;/script&gt;
+
+&lt;p&gt;By applying Bayes rule to &lt;code class=&quot;highlighter-rouge&quot;&gt;$p(z|x_i)$&lt;/code&gt;, we have&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{equation}
+\begin{split}
+  {\rm KL}(q(z|x)\|p(z|x)) &amp;=\mathbb{E}_{z \sim q(z|x)} \left [ \log \frac{q(z|x)p(x)}{p(x|z)p(z)} \right ] \\
+  &amp;= \mathbb{E}_{z \sim q(z|x)} \left [ \log q(z|x) \right ] + \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x) \right ] \\
+  &amp; \ \ \ \ - \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z)\right ] -  \mathbb{E}_{z \sim q(z|x)} \left [ \log p(z) \right ]
+\end{split}
+\end{equation} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;This equation actually involves the target that we want to maximize, &lt;code class=&quot;highlighter-rouge&quot;&gt;$\mathbb{E}_{z \sim q(z|x)} \left [ \log p(x) \right ]$&lt;/code&gt;, thus we change the format of the above target as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{equation}
+\begin{split}
+  \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x) \right ] - {\rm KL}(q(z|x)\|p(z|x)) &amp;= \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) \right ] + \mathbb{E}_{z \sim q(z|x)} \left [ \log p(z)  -  \log q(z|x) \right ] \\
+   &amp;= \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) \right ] - {\rm KL}(q(z|x) \| p(z)).
+\end{split}
+\end{equation} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Because the KL divergence also great equal than 0, thus we can have the lower bound of &lt;code class=&quot;highlighter-rouge&quot;&gt;$\mathbb{E}_{z \sim q(z|x)} \left [ \log p(x) \right ]$&lt;/code&gt; as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\mathbb{E}_{z \sim q(z|x)} \left [ \log p(x) \right ] \ge \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) \right ] - {\rm KL}(q(z|x) \| p(z)).&lt;/script&gt;
+
+&lt;p&gt;And this is actually the training target function of VAE which includes two part, the first term is reconstruction loss &lt;code class=&quot;highlighter-rouge&quot;&gt;$\mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) \right ]$&lt;/code&gt; which means giving a z sampled from &lt;code class=&quot;highlighter-rouge&quot;&gt;$ q(z|x)$&lt;/code&gt; and generating $x$ based on $z$. The second term is regularisation term which calculate the KL divergence between &lt;code class=&quot;highlighter-rouge&quot;&gt;q(z|x)&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;p(z)&lt;/code&gt; where the prior of $z$ is a simple gaussian distribution $p(z) = N(0, I)$.&lt;/p&gt;
+
+&lt;p&gt;However, we find the whole process is not differentiable when we draw the computational graph, thus we can not directly use gradient decent to optimise the target. To address this problem, we use reparametrisation trick to sample $z$:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;q(z|x) = N(\mu(x), \sigma(x)) = \mu(x) + \sigma(x) N(0,I).&lt;/script&gt;
+
+&lt;p&gt;In addition to above way for the derivation of the VAE’s lower bound, we have another way to derive the lower bound of the VAE:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{equation}
+\begin{split}
+\log p(x) &amp;= \log \int_{z} p(x|z)p(z) = \log \int_{z} p(x|z)p(z) \frac{q(z|x)}{q(z|x)} \\
+          &amp;= \log \mathbb{E}_{z \sim q(z|x)} \left [\frac{p(x|z)p(z)}{q(z|x)} \right ] \ \ \ {\rm applying \  Jensen’s \ inequality} \\
+          &amp;\ge \mathbb{E}_{z \sim q(z|x)} \left [ \log \frac{p(x|z)p(z)}{q(z|x)} \right ].
+\end{split}
+\end{equation} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;In general, we call this objective as evidence lower bound (ELBO).&lt;/p&gt;
+
+&lt;h2 id=&quot;using-policy-gradient-theorem-to-solve-vae-amortized-variational-inference&quot;&gt;Using policy gradient theorem to solve VAE (amortized variational inference)&lt;/h2&gt;
+
+&lt;p&gt;Based on the aforementioned discussion, the objective of policy gradient methods and VAE share similar high-level structure, which is given by:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{equation}
+L(\theta, \phi) = \mathbb{E}_{x \sim p_{\phi}(x)}\left [ f_{\theta}(x) \right ],
+\end{equation}&lt;/script&gt;
+
+&lt;p&gt;where $p_{\phi}(x)$ is a distribution parametrised by $\phi$ and $f_{\theta}(x)$ is a cost function for $x$. The objective is to obtain optimal parameters that minimise the target function. Here $f_{\theta}(x)$ in policy gradient and VAE represents the value function and log likelihood, respectively. Obviously, we can use policy gradient to solve VAE.&lt;/p&gt;
+
+&lt;p&gt;Let’s take a look at the ELBO:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{equation}
+\begin{split}
+\log p(x) &amp;\ge \mathbb{E}_{z \sim q(z|x)} \left [ \log \frac{p(x|z)p(z)}{q(z|x)} \right ] \\
+&amp; = \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) + \log p(z) \right ] + \mathbb{E}_{z \sim q(z|x)} q(z|x) \\
+&amp; = \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) + \log p(z) \right ] + \mathcal{H}(q(z|x)),
+\end{split}
+\end{equation} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;where &lt;code class=&quot;highlighter-rouge&quot;&gt;$\mathcal{H}(q(z|x))$&lt;/code&gt; is the entropy of &lt;code class=&quot;highlighter-rouge&quot;&gt;$q(z|x)$&lt;/code&gt;. Our goal is to maximise this ELBO to obtain optimal parameters of &lt;code class=&quot;highlighter-rouge&quot;&gt;$p(x|z)$&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;$q(z|x)$&lt;/code&gt;, which are denotes as $\theta$ and $\phi$. We denote the ELBO as $L(\theta, \phi)$. To apply gradient assent to obtain optimal $\theta$ and $\phi$ we need $\nabla_{\theta}L(\theta, \phi)$ and $\nabla_{\phi}L(\theta, \phi)$. We can use Monte Carlo method to calculate the partial derivative&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\nabla_{\theta}L(\theta, \phi) \approx \mathbb{E}_{z \sim q(z|x)} \left [ \nabla_{\theta}\log p(x|z) \right ]&lt;/script&gt;
+
+&lt;p&gt;Calculating the $\nabla_{\phi}L(\theta, \phi)$ is difficult.  However, if we consider the &lt;code class=&quot;highlighter-rouge&quot;&gt;$q(x|z)$&lt;/code&gt; as policy, $x$ as state, $z$ as action, &lt;code class=&quot;highlighter-rouge&quot;&gt;$\log p(x|z)+\log p(z)$&lt;/code&gt; as reward function. The gradient of the entropy term can be directly calculated while we can use gradient theorem to calculate the term &lt;code class=&quot;highlighter-rouge&quot;&gt;$\mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) + \log p(z) \right ]$&lt;/code&gt;, as&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\nabla_{\phi}\mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) + \log p(z) \right ] = \mathbb{E}_{z \sim q(z|x)} \left [ \nabla_{\phi} \log q(z|x) \sum_{z \sim q(z|x)} r(z,x)  \right ]&lt;/script&gt;
+
+&lt;p&gt;where &lt;code class=&quot;highlighter-rouge&quot;&gt;$r(z,x) = \log p(x|z) + \log p(z) $&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;In summary, we have the partial derivative for both $\theta$ and $\phi$ as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{equation}
+\begin{split}
+\nabla_{\theta}L(\theta, \phi) &amp;\approx \mathbb{E}_{z \sim q(z|x)} \left [ \nabla_{\theta}\log p(x|z) \right ] \\
+
+\nabla_{\phi}L(\theta, \phi) &amp;\approx \mathbb{E}_{z \sim q(z|x)} \left [ \nabla_{\phi} \log q(z|x) \sum_{z \sim q(z|x)} r(z,x)  \right ] + \nabla_{\phi} \mathcal{H}(q(z|x))
+\end{split}
+\end{equation} %]]&gt;&lt;/script&gt;</content><author><name>Jin Wang</name><email>wjlinkpark@gmail.com</email></author><category term="reinforcement-learning" /><category term="VAE" /><summary type="html">Policy gradient theorem is the basis of many deep reinforcement learning methods (e.g., PPO, TRPO, and SAC). Meanwhile, Variational Auto-encoder (VAE) is one of the popular generative methods in machine learning. Since the target problems of these approaches share the same formulation, we can use policy gradient as an alternative training method for VAE.</summary></entry></feed>
