@@ -5,9 +5,7 @@ permalink: /about/
 ---
 <img src="{{ '/assets/images/profile_photo.jpg' | relative_url }}" width="200" height="200" />
 
-I am currently a Ph.D. student at the University of Exeter. I have also spent half a year in London at the Alan Turing Institute as an [enrichment student](https://www.turing.ac.uk/people/jin-wang). My research interest includes cloud and edge computing, learning-based system optimisation, reinforcement learning, and applied machine learning. 
-
-I received both of my B.S. and M.S. from University of Electronic Science and Technology of China (UESTC), majored in Computer Science. 
+I am currently a Ph.D. student at the University of Exeter. I received both of my B.S. and M.S. from University of Electronic Science and Technology of China (UESTC), majored in Computer Science. My research interest includes cloud and edge computing, learning-based system optimisation, reinforcement learning, and applied machine learning. 
 
 Here are some of my recent publications:
 
@@ -19,6 +17,6 @@ Here are some of my recent publications:
 
 * Z. Wang, J. Hu, G. Min, Z. Zhao, J. Wang, [Data Augmentation based Cellular Traffic Prediction in Edge Computing-Enabled Smart City](https://ieeexplore.ieee.org/document/9140397). IEEE Transactions on Industrial Informatics, early access, 2020
 
-* W. Zhan, C. Luo, J. Wang, C. Wang, G. Min, H. Duan, and Q. Zhu,[Deep Reinforcement Learning-Based Offloading Scheduling for Vehicular Edge Computing](https://ieeexplore.ieee.org/document/9026935). IEEE Internet of Things Journal, vol. 7, no. 6, pp. 5449--5465, 2020.
+* W. Zhan, C. Luo, J. Wang, G. Min, and H. Duan,[Deep Reinforcement Learning-based Computation Offloading in Vehicular Edge Computing](https://ieeexplore.ieee.org/abstract/document/9013982). IEEE Global Communications Conference (GLOBECOM), 2019.
 
-In normal life, I am a fan of photography and hiking, here is my [Instagram](https://www.instagram.com/linkpark1904/).  
+In normal life, I am a fan of photography and hiking, here is my [Instagram](https://www.instagram.com/linkpark1904/).
