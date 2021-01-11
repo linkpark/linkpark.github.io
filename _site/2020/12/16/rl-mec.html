@@ -122,8 +122,8 @@ recognition, which consists of dependent tasks such as tiler, detection, or feat
 
 <script type="math/tex; mode=display">J(\theta) = \mathbb{E}_{\mathcal{T}_i \sim \rho(\mathcal{T})} \left [  J_{\mathcal{T}_i}(\theta')  \right ], {\rm with} \ \theta' := U(\theta, \mathcal{T}_i),</script>
 
-<p>where $\mathcal{T}$ represents a learning task, $\rho(\mathcal{T})$ represents the distribution of learning tasks, and $\theta$ represent the parameters of the policy network. $U$ represents the update function, for instance, if we conduct $k$-step gradient ascent for $\mathcal{T}<em>i$, then 
-$U(\theta, \mathcal{T}_i) = \theta + \alpha\sum</em>{t=1}^k g_t$, where $g_t$ denotes the gradient of $J_{\mathcal{T}_i}$ at time step $t$ and $\alpha$ is the learning rate.</p>
+<p>where $\mathcal{T}$ represents a learning task, $\rho(\mathcal{T})$ represents the distribution of learning tasks, and $\theta$ represent the parameters of the policy network. $U$ represents the update function, for instance, if we conduct $k$-step gradient ascent for <script type="math/tex">\mathcal{T}_i</script>, then 
+<script type="math/tex">U(\theta, \mathcal{T}_i) = \theta + \alpha\sum_{t=1}^k g_t</script>, where $g_t$ denotes the gradient of $J_{\mathcal{T}_i}$ at time step $t$ and $\alpha$ is the learning rate.</p>
 
 <p>Therefore, the optimal parameters of policy network and update rules are</p>
 
