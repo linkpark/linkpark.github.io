@@ -201,7 +201,7 @@ L(\theta, \phi) = \mathbb{E}_{x \sim p_{\phi}(x)}\left [ f_{\theta}(x) \right ],
 \begin{equation}
 \begin{split}
 \log p(x) &\ge \mathbb{E}_{z \sim q(z|x)} \left [ \log \frac{p(x|z)p(z)}{q(z|x)} \right ] \\
-& = \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) + \log p(z) \right ] + \mathbb{E}_{z \sim q(z|x)} q(z|x) \\
+& = \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) + \log p(z) \right ] - \mathbb{E}_{z \sim q(z|x)} q(z|x) \\
 & = \mathbb{E}_{z \sim q(z|x)} \left [ \log p(x|z) + \log p(z) \right ] + \mathcal{H}(q(z|x)),
 \end{split}
 \end{equation} %]]></script>
