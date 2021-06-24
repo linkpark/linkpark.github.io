@@ -19,4 +19,6 @@ Here are some of my recent publications:
 
 * W. Zhan, C. Luo, J. Wang, G. Min, and H. Duan,[Deep Reinforcement Learning-based Computation Offloading in Vehicular Edge Computing](https://ieeexplore.ieee.org/abstract/document/9013982). IEEE Global Communications Conference (GLOBECOM), 2019.
 
+Here is my google scholar link: [https://scholar.google.com/citations?user=3jFEgwQAAAAJ&hl=en-CN](https://scholar.google.com/citations?user=3jFEgwQAAAAJ&hl=en-CN).
+
 In normal life, I am a fan of photography and hiking, here is my [Instagram](https://www.instagram.com/linkpark1904/).
