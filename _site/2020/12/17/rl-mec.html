@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Learning-driven task offloading in multi-access edge computing | Jin’s Research Blog</title>
+<meta name="generator" content="Jekyll v4.0.0" />
+<meta property="og:title" content="Learning-driven task offloading in multi-access edge computing" />
+<meta name="author" content="Jin Wang" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Multi-access edge computing (MEC) has attracted lots of research interests from both academic and industrial fields, which aims to extend cloud service to the network edge to reduce network traffic and service latency. One key decision-making problem in MEC systems is task offloading which aims to decide which tasks should be migrated to the MEC server to minimize the running cost. In this article, I am going to talk about how to use learning-based methods to address the above problem." />
+<meta property="og:description" content="Multi-access edge computing (MEC) has attracted lots of research interests from both academic and industrial fields, which aims to extend cloud service to the network edge to reduce network traffic and service latency. One key decision-making problem in MEC systems is task offloading which aims to decide which tasks should be migrated to the MEC server to minimize the running cost. In this article, I am going to talk about how to use learning-based methods to address the above problem." />
+<link rel="canonical" href="http://localhost:4000/2020/12/17/rl-mec.html" />
+<meta property="og:url" content="http://localhost:4000/2020/12/17/rl-mec.html" />
+<meta property="og:site_name" content="Jin’s Research Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-12-17T00:09:00+08:00" />
+<script type="application/ld+json">
+{"headline":"Learning-driven task offloading in multi-access edge computing","dateModified":"2020-12-17T00:09:00+08:00","datePublished":"2020-12-17T00:09:00+08:00","@type":"BlogPosting","url":"http://localhost:4000/2020/12/17/rl-mec.html","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2020/12/17/rl-mec.html"},"author":{"@type":"Person","name":"Jin Wang"},"description":"Multi-access edge computing (MEC) has attracted lots of research interests from both academic and industrial fields, which aims to extend cloud service to the network edge to reduce network traffic and service latency. One key decision-making problem in MEC systems is task offloading which aims to decide which tasks should be migrated to the MEC server to minimize the running cost. In this article, I am going to talk about how to use learning-based methods to address the above problem.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Jin's Research Blog" />
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script> 
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Jin&#39;s Research Blog</a><nav class="site-nav">
+      <span>&#128187; &nbsp; </span>
+            <a class="page-link" href="/about">About</a>
+        </nav>
+        
+      <nav class="site-nav">
+        <span>&#128196; &nbsp;</span>
+            <a class="page-link" href="/archive.html">
+ Archive</a>
+        </nav></div>
+  
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Learning-driven task offloading in multi-access edge computing</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2020-12-17T00:09:00+08:00" itemprop="datePublished">
+        Dec 17, 2020
+      </time><span>
+        
+          
+          <a class="post-tag" href="/tag/MEC"><nobr>MEC</nobr>&nbsp;</a>
+        
+          
+          <a class="post-tag" href="/tag/task-offloading"><nobr>task-offloading</nobr>&nbsp;</a>
+        
+          
+          <a class="post-tag" href="/tag/service-migration"><nobr>service-migration</nobr>&nbsp;</a>
+        
+          
+          <a class="post-tag" href="/tag/reinforcement-learning"><nobr>reinforcement-learning</nobr>&nbsp;</a>
+        
+      </span>
+    </p>
+
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <blockquote>
+  <p>Multi-access edge computing (MEC) has attracted lots of research interests from both academic and industrial fields, which aims to extend cloud service to the network edge to reduce network traffic and service latency. One key decision-making problem in MEC systems is task offloading which aims to decide which tasks should be migrated to the MEC server to minimize the running cost. In this article, I am going to talk about how to use learning-based methods to address the above problem. 
+<!--more--></p>
+</blockquote>
+
+<h2 id="an-overview-of-multi-access-edge-computing">An overview of Multi-access edge computing</h2>
+
+<p>The technological evolution of smartphones, tablets, and wearable devices is driving the emergence of novel computationally demanding services and applications such as virtual reality (VR), augmented reality (AR), face recognition, and mobile healthcare. Although new generations of mobile devices possess more computing power, they are still unable to run the computation-intensive applications efficiently. To resolve this issue, <a href="https://www.etsi.org/technologies/multi-access-edge-computing">Multi-access Edge Computing (MEC)</a>, a key technology in the fifth-generation (5G) network, was proposed to meet the ever-increasing demands for the Quality-of-Service (QoS) of mobile applications. MEC provides many computing and storage resources at the network edge (close to users), which can effectively cut down the application latency and improve the QoS.</p>
+
+<p><img src="/assets/images/MEC-system-applications.png" alt="MEC-system application" />
+<em><center>Fig. 1 MEC system architecture.</center></em></p>
+
+<p>Numerous MEC applications have emerged in different areas, which improve the quality of living and enhance productivity. Meanwhile, a variety of applications such as social networking, gaming, and AR become increasingly complex, and therefore demand more computing resources and energy. In the definition of the ESTI, a MEC system generally consists of tree levels: user level, edge level, and remote level. Here, the user level includes heterogeneous user devices, the edge level contains MEC servers that provide edge computing services, and the remote level consists of cloud servers. Specifically, mobile users communicate with an MEC server through the local transmission unit. The edge level incorporates a virtualization infrastructure that provides the computing, storage, and network resources.</p>
+
+<h3 id="task-offloading-in-mec">Task offloading in MEC</h3>
+
+<p>Task offloading is to decision what tasks should be offloaded from the user devices to the MEC server so that the total running cost is minimal. In general, there are two task models used in the related work: task model for binary offloading and that for partial offloading according to a <a href="https://ieeexplore.ieee.org/document/8016573">survey paper</a>. In the task model for binary offloading, there are no inner dependencies among computation tasks for a mobile application. In contrast, mobile applications are composed of tasks with inner dependencies in the task model for partial offloading, which is able to achieve a fine granularity of computation offloading, leading to better offloading performance. Hence, we consider task model for partial offloading.<br />
+<img src="/assets/images/mec-example.png" alt="example" width="500" />
+<em><center>Fig. 2 An example of task offloading.</center></em></p>
+
+<p>The above figure shows a typical example of the task offloading in MEC system. This example considers a real-world application—face
+recognition, which consists of dependent tasks such as tiler, detection, or feature mergence. The mobile device makes offloading decisions for those tasks according to the system status and task profiles, thus some tasks are run locally on the mobile device while others are offloaded to the MEC host via wireless channels. Typically, the mobile application can be modelled as Directed Acyclic Graph (DAG), where the vertex set represents the tasks and the directed edge set represents the dependencies among tasks, respectively. The task offloading problem can then be converted to specific DAG scheduling problem with the MEC environment. However, this problem is hard to solve due to the NP-hardness. Traditional solutions for the NP-hard problem requires considerable human expert knowledge to design and tuning the heuristic rules of the algorithm, which might hard to fast adapt to dynamic scenarios arisen from increasing complexity of applications and architectures of MEC. To address the above challenging, <a href="http://incompleteideas.net/book/the-book.html">Reinforcement learning</a> based algorithms are promising which learn to solve complex decision-making problems based on the interaction with the target environment.</p>
+
+<h2 id="reinforcement-learning-based-task-offloading-in-mec">Reinforcement Learning based task offloading in MEC</h2>
+
+<p>In order to design reinforcement learning based task offloading method, we need to tailer the components of the RL including state space, action space, reward function, representation of the policy, etc. according to the task offloading problem. Let us first review basic concept of reinforcement learning.</p>
+
+<h3 id="a-brief-introduction-of-reinforcement-learning">A Brief Introduction of Reinforcement Learning</h3>
+
+<p>RL considers learning from environment so as to maximize the accumulated reward. Formally, a learning task,  $\mathcal{T}$, is modelled as an MDP, which is defined by a tuple $( \mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{P}_0, \mathcal{R}, \gamma )$. Here, $\mathcal{S}$ is the state space, $\mathcal{A}$ denotes the action space, $\mathcal{R}$ is a reward function, $\mathcal{P}$ is the state-transition probabilities matrix, $\mathcal{P}_0$ is the initial state distribution, and $\gamma \in [0, 1]$ is the discount factor. A policy $\pi(a \mid s)$, where $a \in \mathcal{A}$ and $s \in \mathcal{S}$, is a mapping from state $s$ to the probability of selecting action $a$. We define the trajectories sampled from the environment according to the policy $\pi$ as $\tau = (s_0, a_0, r_0, s_1, a_1, r_1, …)$, where $s_0 \sim \mathcal{P}_0$, $a_t \sim \pi( … \mid s_t)$ and $r_t$ is a reward at time step $t$.</p>
+
+<p>The state value function of a state $s_t$ under a parameterized policy $\pi(a \mid s; \theta)$,  denoted as $v_{\pi}(s_t)$, is the expected return when starting in $s_t$ and following $\pi(a \mid s; \theta)$ thereafter. Here, $\theta$ is the vector of policy parameters and $v_{\pi}(s_t)$ can be calculated by</p>
+
+<script type="math/tex; mode=display">v_{\pi}(s_t)=\mathbb{E}_{\tau \sim P_{\mathcal{T}}(\tau \mid \theta)}\left[ \sum_{k=t}\gamma^{k-t} r_k \right]</script>
+
+<p>where $P_{\mathcal{T}}(\tau \mid \theta)$ is the probability distribution of sampled trajectories based on $\pi(a \mid s; \theta)$. The goal for RL is to find an optimal parameterized policy $\pi(a \mid s; \theta^*)$ to maximize the expected total rewards $ J = \sum_{s_0 \sim \mathcal{P}_0} v(s_0)$.</p>
+
+<h3 id="reinforcement-learning-based-task-offloading">Reinforcement Learning based Task offloading</h3>
+
+<p>The above task offloading problem is a typical combinatorial optimization problem, inspired by some early works that use sequence-to-sequence (seq2seq) neural network to solve combinatorial problem (<a href="https://arxiv.org/abs/1506.03134">pointer network</a>, <a href="https://arxiv.org/abs/1611.09940">RL+pointer network</a>), our core idea is to convert the task offloading into a sequence-to-sequence decision-making problem, where the input is a sequence of tasks and the output is the decisions of the tasks. The offloading policy is represented by a seq2seq neural network as follows:
+<img src="/assets/images/seq2seq-network.png" alt="example" width="500" />
+<em><center>Fig. 3 The structure of sequence to sequence neural network.</center></em></p>
+
+<p>The policy network is a typical encoder-decoder architecture, where both encoder and decoder are Long Short-Term Memory (LSTM). The encoder aims encoder the DAG information and decoder aims to output offloading decisions for tasks. To better extract features from the DAG, the encoder can be replaced by <a href="https://arxiv.org/abs/1901.00596">Graph Neural Network (GNN)</a> which shows good representing performance handling graph data.</p>
+
+<p>After we choose the right model to represent the policy, the next issue we need to solve is how to train the policy network in MEC system? Considering different mobile users may have different preference of mobile applications, it is better to obtain personlized policy for mobile users rather than obtaining a global policy for all users. Besides, considering the limited computation resources and local data of mobile users, we need to improve the training efficiency on mobile devices. To address the above issue, <a href="https://sites.google.com/view/icml19metalearning">Meta Reinforcement Learning (MetaRL)</a> is an appealing solution.</p>
+
+<p>MetaRL aims to learn policies for new tasks within a small number of interactions with the environment by building on previous experiences. In general, MRL conducts two “loops” of learning, an “outer loop” which uses its experiences over many task contexts to gradually adjust parameters of the meta policy that governs the operation of an “inner loop”. Based on the meta policy, the “inner loop” can adapt fast to new tasks through a small number of gradient updates (here is a <a href="https://www.cell.com/action/showPdf?pii=S1364-6613%2819%2930061-0">very good paper</a> to describe MRL). To make it concrete, we follow the formulation of model-agnostic meta-learning (MAML), giving the target of MRL as:</p>
+
+<script type="math/tex; mode=display">J(\theta) = \mathbb{E}_{\mathcal{T}_i \sim \rho(\mathcal{T})} \left [  J_{\mathcal{T}_i}(\theta')  \right ], {\rm with} \ \theta' := U(\theta, \mathcal{T}_i),</script>
+
+<p>where $\mathcal{T}$ represents a learning task, $\rho(\mathcal{T})$ represents the distribution of learning tasks, and $\theta$ represent the parameters of the policy network. $U$ represents the update function, for instance, if we conduct $k$-step gradient ascent for $\mathcal{T}$, then 
+$U(\theta, \mathcal{T}) = \theta + \alpha\sum_{t=1}^k g_t$, where $g_t$ denotes the gradient of $J_{\mathcal{T}_i}$ at time step $t$ and $\alpha$ is the learning rate.</p>
+
+<p>Therefore, the optimal parameters of policy network and update rules are</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{equation}
+\label{MRL-update}
+\begin{aligned}
+& \theta^{*} = {\rm argmax}_{\theta} \mathbb{E}_{\mathcal{T}_i \sim \rho(\mathcal{T})} \left [  J_{\mathcal{T}_i}(U(\theta, \mathcal{T}_i)  \right ], \\
+&\theta \leftarrow \theta + \beta \mathbb{E}_{\mathcal{T}_i \sim \rho(\mathcal{T})} \left [ \nabla_{\theta}J_{\mathcal{T}_i}(U(\theta, \mathcal{T}_i)  \right ],
+\end{aligned}
+\end{equation} %]]></script>
+
+<p>where $\beta$ is the learning rate of “outer loop” training.</p>
+
+<p><img src="/assets/images/meta-rl-offloading.png" alt="example" width="700" />
+<em><center>Fig. 4 Integrating meta reinforcement learning with MEC.</center></em></p>
+
+<p>This “inner-outer loop” training scheme can be perfectly integrated into the MEC system, where the “outer loop” is conducted on the edge server to obtain the meta offloading policy for all mobile users and the “inner loop” training can be conducted by the mobile user to get the personalized offloading policy. As shown in Fig. 4, the training process includes four steps. First, the mobile user downloads the parameters of the meta policy from the MEC server. Next, an “inner loop” training is run on every mobile device based on the meta policy and the local data, in order to obtain the personalized policy. The mobile user then uploads the parameters of the personalized policy to the MEC server. Finally, the MEC server conducts an “outer loop” training based on the gathered parameters of personalized policies, generates the new meta policy, and starts a new round of training. Once obtaining the stable meta policy, we can leverage it to fast learn a personalized policy for new mobile user through “inner loop” training. Notice that the “inner loop” training only needs few training steps and a small amount of data, thus can be sufficiently supported by the mobile devices.</p>
+
+<hr />
+
+<p>This post is based on the following papers:</p>
+
+<ul>
+  <li><a href="https://ore.exeter.ac.uk/repository/bitstream/handle/10871/36902/confpaper.pdf;jsessionid=61B0B4362F3AFFAF5968729F1F23B01D?sequence=1">Computation Offloading in Multi-Access Edge Computing Using a Deep Sequential Model Based on Reinforcement Learning</a>. IEEE Communications Magazine, vol. 57, no. 5, pp. 64–69, 2019.</li>
+  <li><a href="https://arxiv.org/abs/2008.02033">Fast Adaptive Computation Offloading in Edge Computing based on Meta Reinforcement Learning</a>. IEEE Transactions on Parallel and Distributed Systems, vol. 32, no. 1, pp. 242–253, 2020.</li>
+</ul>
+
+
+  </div><a class="u-url" href="/2020/12/17/rl-mec.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+          <span>&#x23F3;</span>
+          <a href="/tags.html">
+            <span> Tags</span>
+          </a>
+        </p>
+        <ul class="contact-list">
+          <!-- <li class="p-name">Jin Wang</li>
+          -->
+          <li><a class="u-email" href="mailto:jinwang1904@gmail.com">jinwang1904@gmail.com</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p>Keep it simple and easy</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/linkpark" title="linkpark"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://www.instagram.com/linkpark1904" title="linkpark1904"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#instagram"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/jin-wang-9895b0128" title="jin-wang-9895b0128"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg></a></li></ul>
+</div>
+
+  </div>
+</footer>
+
+</body>
+
+</html>
